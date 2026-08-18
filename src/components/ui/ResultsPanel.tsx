@@ -36,19 +36,23 @@ export default function ResultsPanel({ onAskGemini }: { onAskGemini: () => void 
     ? solution.conditionalWindows?.find((w) => date.getTime() >= w.startDate.getTime() && date.getTime() <= w.endDate.getTime())
     : undefined;
 
-  const badgeText = isConditional
-    ? `Direct + seasonal relay`
-    : solution.type === 'direct'
-      ? 'Direct link'
-      : solution.type === 'single-relay'
-        ? '1 relay'
-        : '2 relays';
+  const badgeText = solution.rotationLimited
+    ? 'Rotation-limited'
+    : isConditional
+      ? `Direct + seasonal relay`
+      : solution.type === 'direct'
+        ? 'Direct link'
+        : solution.type === 'single-relay'
+          ? '1 relay'
+          : '2 relays';
 
-  const badgeClass = isConditional
-    ? 'bg-violet-500/20 text-violet-300'
-    : solution.type === 'direct'
-      ? 'bg-sky-500/20 text-sky-300'
-      : 'bg-amber-500/20 text-amber-300';
+  const badgeClass = solution.rotationLimited
+    ? 'bg-orange-500/20 text-orange-300'
+    : isConditional
+      ? 'bg-violet-500/20 text-violet-300'
+      : solution.type === 'direct'
+        ? 'bg-sky-500/20 text-sky-300'
+        : 'bg-amber-500/20 text-amber-300';
 
   return (
     <div className="w-[300px] rounded-2xl border border-white/10 bg-black/50 p-4 backdrop-blur-xl shadow-2xl shadow-black/50">

@@ -299,11 +299,32 @@ function candidatePos(candidate: LagrangeCandidate): PositionFn {
   };
 }
 
+/**
+ * The old exclusion rule (skip t within 0.1% of either segment end) was
+ * sized for AU-scale segments where an endpoint might coincide with the
+ * body being tested (e.g. a hop starting at a planet). It quietly breaks
+ * for a surface-settlement endpoint: standing on a ~3,000 km-radius planet
+ * with a target 1.5 AU away, 0.1% of the segment is >1,500 km -- enough to
+ * swallow the real self-occlusion the whole settlement feature exists to
+ * detect (the settlement's own planet blocking its view on the "night"
+ * side). Using an absolute distance instead fixes this for every segment
+ * length: it only excludes the literal endpoint vicinity (a few hundred
+ * meters), not a physically meaningful chunk of the path.
+ */
+const MIN_EDGE_DISTANCE_AU = 1e-6; // ~150 m
+
+function isInteriorHit(t: number, segmentLengthAU: number): boolean {
+  const distFromA = t * segmentLengthAU;
+  const distFromB = (1 - t) * segmentLengthAU;
+  return distFromA > MIN_EDGE_DISTANCE_AU && distFromB > MIN_EDGE_DISTANCE_AU;
+}
+
 /** Is the segment A-B occluded by any planet, moon, or the Sun, at a single instant in time? */
 export function isSegmentOccluded(a: Vec3, b: Vec3, date: Date): { occluded: boolean; by?: string } {
+  const segLen = vecLength(vecSub(b, a));
   {
     const { distance, t } = pointSegmentDistance({ x: 0, y: 0, z: 0 }, a, b);
-    if (distance < SUN_OCCLUSION_RADIUS_AU && t > 0.001 && t < 0.999) {
+    if (distance < SUN_OCCLUSION_RADIUS_AU && isInteriorHit(t, segLen)) {
       return { occluded: true, by: 'Sun' };
     }
   }
@@ -312,7 +333,7 @@ export function isSegmentOccluded(a: Vec3, b: Vec3, date: Date): { occluded: boo
     const { distance, t } = pointSegmentDistance(pos, a, b);
     const radiusAU = (planet.radiusKm + SIGNAL_MARGIN_KM) / AU_KM;
     // Only counts as blocking if the closest approach lies strictly within the segment
-    if (distance < radiusAU && t > 0.001 && t < 0.999) {
+    if (distance < radiusAU && isInteriorHit(t, segLen)) {
       return { occluded: true, by: planet.name };
     }
   }
@@ -320,7 +341,7 @@ export function isSegmentOccluded(a: Vec3, b: Vec3, date: Date): { occluded: boo
     const pos = moonPositionAtDate(moon, date);
     const { distance, t } = pointSegmentDistance(pos, a, b);
     const radiusAU = moonOcclusionRadiusAU(moon);
-    if (distance < radiusAU && t > 0.001 && t < 0.999) {
+    if (distance < radiusAU && isInteriorHit(t, segLen)) {
       return { occluded: true, by: moon.name };
     }
   }
@@ -347,10 +368,11 @@ function checkPathClearInRange(posA: PositionFn, posB: PositionFn, startMs: numb
     const date = new Date(startMs + (s / samples) * (endMs - startMs));
     const a = posA(date);
     const b = posB(date);
+    const segLen = vecLength(vecSub(b, a));
 
     {
       const { distance, t } = pointSegmentDistance({ x: 0, y: 0, z: 0 }, a, b);
-      if (t > 0.001 && t < 0.999) {
+      if (isInteriorHit(t, segLen)) {
         const margin = distance - SUN_OCCLUSION_RADIUS_AU;
         if (margin < worstMarginAU) worstMarginAU = margin;
         if (margin < 0) blockingEvents.push({ date, planet: 'Sun' });
@@ -360,7 +382,7 @@ function checkPathClearInRange(posA: PositionFn, posB: PositionFn, startMs: numb
     for (const planet of PLANETS) {
       const pos = planetPositionAtDate(planet.elements, date);
       const { distance, t } = pointSegmentDistance(pos, a, b);
-      if (t <= 0.001 || t >= 0.999) continue;
+      if (!isInteriorHit(t, segLen)) continue;
       const radiusAU = (planet.radiusKm + SIGNAL_MARGIN_KM) / AU_KM;
       const margin = distance - radiusAU;
       if (margin < worstMarginAU) worstMarginAU = margin;
@@ -370,7 +392,7 @@ function checkPathClearInRange(posA: PositionFn, posB: PositionFn, startMs: numb
     for (const moon of MOONS) {
       const pos = moonPositionAtDate(moon, date);
       const { distance, t } = pointSegmentDistance(pos, a, b);
-      if (t <= 0.001 || t >= 0.999) continue;
+      if (!isInteriorHit(t, segLen)) continue;
       const radiusAU = moonOcclusionRadiusAU(moon);
       const margin = distance - radiusAU;
       if (margin < worstMarginAU) worstMarginAU = margin;

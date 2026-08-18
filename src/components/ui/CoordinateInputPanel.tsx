@@ -90,6 +90,7 @@ function CoordRow({
   onLocateOrbit,
   locating,
   locateError,
+  onPlaceSettlement,
 }: {
   label: string;
   color: string;
@@ -105,8 +106,13 @@ function CoordRow({
   onLocateOrbit: (query: string) => void;
   locating: boolean;
   locateError: string | null;
+  onPlaceSettlement: (bodyName: string, latDeg: number, lonDeg: number) => void;
 }) {
   const [orbitQuery, setOrbitQuery] = useState('');
+  const [settlementOpen, setSettlementOpen] = useState(false);
+  const [settlementBody, setSettlementBody] = useState('Mars');
+  const [settlementLat, setSettlementLat] = useState('0');
+  const [settlementLon, setSettlementLon] = useState('0');
 
   return (
     <div className="group rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 transition-colors hover:border-white/[0.12] hover:bg-white/[0.04]">
@@ -189,6 +195,89 @@ function CoordRow({
         </button>
       </div>
       {locateError && <p className="mb-2 text-[10px] leading-snug text-rose-400">{locateError}</p>}
+
+      <button
+        onClick={() => setSettlementOpen((v) => !v)}
+        className="mb-2 flex items-center gap-1 text-[10px] text-white/40 hover:text-white/70"
+      >
+        <svg
+          className={`h-2 w-2 transition-transform ${settlementOpen ? 'rotate-90' : ''}`}
+          viewBox="0 0 12 12"
+          fill="none"
+        >
+          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        place a fixed surface settlement (lat/lon)
+      </button>
+
+      <AnimatePresence initial={false}>
+        {settlementOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-2 overflow-hidden"
+          >
+            <div className="space-y-1.5 rounded-md border border-white/10 bg-black/30 p-2">
+              <select
+                value={settlementBody}
+                onChange={(e) => setSettlementBody(e.target.value)}
+                className="w-full rounded-md border border-white/10 bg-black/40 px-2 py-1 text-[11px] text-white/80 outline-none"
+              >
+                <optgroup label="Planets">
+                  {PLANETS.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name}
+                    </option>
+                  ))}
+                </optgroup>
+                {PLANETS.filter((p) => moonsOf(p.name).length > 0).map((p) => (
+                  <optgroup key={p.name} label={`${p.name}'s moons`}>
+                    {moonsOf(p.name).map((m) => (
+                      <option key={m.name} value={m.name}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[9px] text-white/25">LAT</span>
+                  <input
+                    value={settlementLat}
+                    onChange={(e) => /^-?\d{0,3}(\.\d*)?$/.test(e.target.value) && setSettlementLat(e.target.value)}
+                    className="w-full rounded-md border border-white/10 bg-black/40 py-1 pl-8 pr-2 text-[11px] text-white/85 outline-none"
+                  />
+                </div>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[9px] text-white/25">LON</span>
+                  <input
+                    value={settlementLon}
+                    onChange={(e) => /^-?\d{0,3}(\.\d*)?$/.test(e.target.value) && setSettlementLon(e.target.value)}
+                    className="w-full rounded-md border border-white/10 bg-black/40 py-1 pl-8 pr-2 text-[11px] text-white/85 outline-none"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const lat = Math.max(-90, Math.min(90, parseFloat(settlementLat) || 0));
+                  const lon = parseFloat(settlementLon) || 0;
+                  onPlaceSettlement(settlementBody, lat, lon);
+                  setSettlementOpen(false);
+                }}
+                className="w-full rounded-md bg-gradient-to-r from-amber-500/80 to-orange-500/80 py-1.5 text-[11px] font-medium text-white transition hover:brightness-110"
+              >
+                Place settlement
+              </button>
+              <p className="text-[9px] leading-snug text-white/25">
+                Lat -90 to 90, lon any degrees. The settlement rotates with {settlementBody} — line-of-sight depends
+                on which way it's facing, not just conjunctions.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-3 gap-1.5">
         {(['x', 'y', 'z'] as const).map((axis) => (
@@ -291,6 +380,30 @@ export default function CoordinateInputPanel() {
     }
   };
 
+  const placeSettlement = (which: 'A' | 'B', bodyName: string, latDeg: number, lonDeg: number) => {
+    const spec = { kind: 'surface' as const, bodyName, latDeg, lonDeg };
+    const pos = resolveEndpointSpec(spec, date);
+    const latLabel = `${Math.abs(latDeg).toFixed(1)}°${latDeg >= 0 ? 'N' : 'S'}`;
+    const lonLabel = `${Math.abs(((lonDeg % 360) + 360) % 360).toFixed(1)}°E`;
+    const description = `Settlement at ${latLabel}, ${lonLabel} on ${bodyName}`;
+    const setter = which === 'A' ? setPointA : setPointB;
+    setter({
+      label: description,
+      x: pos.x,
+      y: pos.y,
+      z: pos.z,
+      attachedPlanet: null,
+      orbitalLocation: {
+        description,
+        source: 'builtin',
+        spec,
+        notes: "Fixed to the surface -- line-of-sight depends on the body's rotation carrying it in and out of view, not just conjunctions.",
+      },
+    });
+    if (which === 'A') setManualA((v) => v + 1);
+    else setManualB((v) => v + 1);
+  };
+
   const swap = () => {
     const a = { ...pointA };
     const b = { ...pointB };
@@ -341,6 +454,7 @@ export default function CoordinateInputPanel() {
           onLocateOrbit={(q) => locateOrbit('A', q)}
           locating={locatingA}
           locateError={locateErrorA}
+          onPlaceSettlement={(bodyName, lat, lon) => placeSettlement('A', bodyName, lat, lon)}
         />
         <CoordRow
           label={pointB.label || 'Point B'}
@@ -357,6 +471,7 @@ export default function CoordinateInputPanel() {
           onLocateOrbit={(q) => locateOrbit('B', q)}
           locating={locatingB}
           locateError={locateErrorB}
+          onPlaceSettlement={(bodyName, lat, lon) => placeSettlement('B', bodyName, lat, lon)}
         />
       </div>
 
