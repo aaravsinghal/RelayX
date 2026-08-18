@@ -186,7 +186,7 @@ export function computeL1L2(planet: PlanetInfo, date: Date): { L1: Vec3; L2: Vec
  * phase at J2000 (L=0, periapsis at the ascending node) is a simplifying
  * assumption, which is why this is labeled "illustrative" in the UI.
  */
-function staticHeliocentricElements(a: number, e: number, i: number): OrbitalElements {
+export function staticHeliocentricElements(a: number, e: number, i: number): OrbitalElements {
   const periodYears = Math.pow(Math.max(a, 0.01), 1.5);
   const LDotPerCentury = (360 / periodYears) * 100;
   return { a, aDot: 0, e, eDot: 0, i, iDot: 0, L: 0, LDot: LDotPerCentury, peri: 0, periDot: 0, node: 0, nodeDot: 0 };

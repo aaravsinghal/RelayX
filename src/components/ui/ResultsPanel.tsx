@@ -75,6 +75,30 @@ export default function ResultsPanel({ onAskGemini }: { onAskGemini: () => void 
         </div>
       )}
 
+      {solution.rotationLimited && (
+        <div className="mb-2.5 rounded-lg border border-orange-400/30 bg-orange-500/[0.08] p-2.5">
+          <p className="flex items-center gap-1.5 text-[11.5px] font-semibold text-orange-200">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 3a9 9 0 1 0 9 9M12 3v5h5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Fixed settlement — day/night cycle
+          </p>
+          <p className="mt-1 text-[10.5px] leading-snug text-orange-100/70">
+            {solution.rotationLimited.bodyName}'s own rotation (~{solution.rotationLimited.periodDays.toFixed(2)} day period)
+            carries the settlement's local horizon in and out of view of the target —{' '}
+            <strong className="text-orange-100">~{solution.rotationLimited.dutyCyclePercent.toFixed(0)}%</strong> direct duty
+            cycle. No single heliocentric relay can fully cover this; the one below is the best available compromise. See
+            the notes below for why.
+          </p>
+        </div>
+      )}
+
       {isConditional && (
         <p className="mb-2 text-[11px] leading-relaxed text-violet-200/80">
           Direct line-of-sight works for <strong className="text-violet-100">

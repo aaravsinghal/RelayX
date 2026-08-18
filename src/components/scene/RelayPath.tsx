@@ -4,10 +4,10 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
-import { useSimStore, effectivePosition } from '@/store/useSimStore';
+import { useSimStore, effectivePosition, CoordPoint } from '@/store/useSimStore';
 import { auToScene } from '@/lib/constants';
-import { Vec3 } from '@/lib/orbitalMechanics';
-import { LagrangeCandidate, resolveEndpointSpec } from '@/lib/relayAlgorithm';
+import { Vec3, sampleOrbitPath } from '@/lib/orbitalMechanics';
+import { LagrangeCandidate, resolveEndpointSpec, staticHeliocentricElements } from '@/lib/relayAlgorithm';
 
 function toScene(v: Vec3): [number, number, number] {
   return [auToScene(v.x), auToScene(v.z), auToScene(v.y)];
@@ -109,6 +109,45 @@ function formatShortDate(d: Date): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+/**
+ * The full ellipse of a free heliocentric endpoint (a cycler trajectory, an
+ * AI-identified orbit, ...) -- so selecting one shows where it actually goes
+ * over a full period, not just a single dot at today's position. Distinct
+ * from the always-on faint planet orbit lines: this pulses and sits above
+ * them so the selected endpoint's path reads as "the thing you picked."
+ */
+function HighlightedOrbit({ a, e, i, color, date }: { a: number; e: number; i: number; color: string; date: Date }) {
+  const points = useMemo(() => {
+    const elements = staticHeliocentricElements(a, e, i);
+    return sampleOrbitPath(elements, date, 240).map(
+      (p) => [auToScene(p.x), auToScene(p.z), auToScene(p.y)] as [number, number, number]
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [a, e, i]);
+  const glowRef = useRef<any>(null);
+  useFrame((state) => {
+    if (glowRef.current) {
+      glowRef.current.material.opacity = 0.35 + Math.sin(state.clock.elapsedTime * 1.5) * 0.15;
+    }
+  });
+  return (
+    <>
+      <Line points={points} color={color} lineWidth={1.5} transparent opacity={0.75} />
+      <Line ref={glowRef} points={points} color={color} lineWidth={4} transparent opacity={0.35} depthWrite={false} />
+    </>
+  );
+}
+
+/** Render the highlighted full orbit for an endpoint, if it's a free
+ * heliocentric orbital location (a cycler etc). Planet/moon/Lagrange
+ * endpoints already have their orbits drawn elsewhere (or don't have a
+ * separate one to show), so this only applies to that one spec kind. */
+function EndpointOrbit({ point, color, date }: { point: CoordPoint; color: string; date: Date }) {
+  const spec = point.orbitalLocation?.spec;
+  if (!spec || spec.kind !== 'heliocentric') return null;
+  return <HighlightedOrbit a={spec.a} e={spec.e} i={spec.i} color={color} date={date} />;
+}
+
 export default function RelayPath() {
   const pointA = useSimStore((s) => s.pointA);
   const pointB = useSimStore((s) => s.pointB);
@@ -138,11 +177,12 @@ export default function RelayPath() {
   }, [solution, date, activeWindow]);
 
   const isConditional = solution?.type === 'conditional';
-  // The direct link is the live path except while a blackout window is active.
-  const directIsLive = !!solution && (solution.type === 'direct' || (isConditional && !activeWindow));
 
   return (
     <group>
+      <EndpointOrbit point={pointA} color="#4ade80" date={date} />
+      <EndpointOrbit point={pointB} color="#f472b6" date={date} />
+
       <Marker position={aPos} color="#4ade80" label={pointA.label || 'Point A'} />
       <Marker position={bPos} color="#f472b6" label={pointB.label || 'Point B'} />
 
