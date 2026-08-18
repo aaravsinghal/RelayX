@@ -534,6 +534,9 @@ export interface RelaySolution {
   /** Only set when type === 'conditional': fraction of the year (0-1) the
    * direct link alone is sufficient. */
   directClearFraction?: number;
+  /** Only set when a fixed surface settlement's own rotation, not solar
+   * conjunction, is the binding constraint -- see solveRotatingSurfaceEndpoint. */
+  rotationLimited?: { bodyName: string; periodDays: number; dutyCyclePercent: number };
 }
 
 /**
@@ -589,6 +592,7 @@ function solveRotatingSurfaceEndpoint(
       { from: chosen.c.position, to: bNow, label: `${chosen.c.label} -> B` },
     ],
     report,
+    rotationLimited: { bodyName: settlementBodyName, periodDays, dutyCyclePercent: dutyCycle * 100 },
   };
 }
 
