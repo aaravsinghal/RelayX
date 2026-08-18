@@ -151,6 +151,31 @@ export default function CalculationsPage() {
             static, non-precessing ellipse — labeled &quot;illustrative&quot; in the UI rather than
             presented as mission-grade ephemeris.
           </p>
+          <p>
+            <strong className="text-white/80">A fixed surface settlement</strong> (lat/lon on a
+            named body) is the one endpoint type that isn&apos;t just orbiting — it&apos;s bolted
+            to a rotating sphere, so it experiences a day/night-style visibility cycle that has
+            nothing to do with solar conjunction. Its position is{' '}
+            <InlineMath math="\vec r = \vec r_{body} + R_{body}\,\hat u(\mathrm{lat}, \mathrm{lon}, t)" />
+            , where <InlineMath math="\hat u" /> is the local surface direction under a rigid-body
+            rotation model (fixed spin axis tilted by the body&apos;s axial tilt, real rotation
+            period, arbitrary-but-fixed reference longitude at J2000). Because the settlement sits
+            exactly on the body&apos;s surface, the <em>same</em> occlusion test used everywhere
+            else (§3) naturally captures self-occlusion too: when the target direction points into
+            the ground beneath the settlement, the line-of-sight segment dips back into the parent
+            body and reads as blocked — no separate &quot;horizon formula&quot; needed. Getting
+            this right required fixing a real bug: the occlusion test&apos;s exclusion zone around
+            each segment endpoint was sized as a <em>fraction</em> of the segment&apos;s length,
+            which is fine for AU-scale hops but was over 1,500 km wide for a 1.5 AU hop — big
+            enough to hide genuine self-occlusion by a ~3,000 km-radius planet. It&apos;s now a
+            fixed ~150 m absolute distance instead, correct at any segment length. Because this
+            cycle repeats every rotation (often under a day) rather than every year, the solver
+            skips the seasonal-window model entirely for this case and instead reports a duty-cycle
+            percentage (sampled finely over one real rotation) plus the best available single
+            relay — while being explicit that no single Sun-planet Lagrange point can promise true
+            24/7 coverage to a rotating site, since it rises and sets on roughly the same cadence
+            as everything else in that site&apos;s sky.
+          </p>
         </Section>
 
         <Section title="3. Line-of-sight occlusion test">
