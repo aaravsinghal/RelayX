@@ -62,6 +62,9 @@ interface SimState {
 
   selectedPlanet: string | null;
   setSelectedPlanet: (n: string | null) => void;
+
+  ephemerisMode: 'kepler' | 'nasa-horizons';
+  setEphemerisMode: (mode: 'kepler' | 'nasa-horizons') => void;
 }
 
 const today = new Date();
@@ -92,6 +95,9 @@ export const useSimStore = create<SimState>((set) => ({
 
   selectedPlanet: null,
   setSelectedPlanet: (n) => set({ selectedPlanet: n }),
+
+  ephemerisMode: 'kepler',
+  setEphemerisMode: (mode) => set({ ephemerisMode: mode }),
 }));
 
 export function coordPointToVec(p: CoordPoint): Vec3 {

@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import { Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { MoonInfo, moonRelativeOffset } from '@/lib/moonData';
-import { vecNormalize } from '@/lib/orbitalMechanics';
+import { vecNormalize, sampleOrbitPath } from '@/lib/orbitalMechanics';
 import { useSimStore } from '@/store/useSimStore';
 
 /**
@@ -35,12 +35,13 @@ export default function Moon({ moon, visualOrbitRadius }: { moon: MoonInfo; visu
 
   const ringPoints = useMemo(() => {
     const pts: [number, number, number][] = [];
-    for (let i = 0; i <= 64; i++) {
-      const t = (i / 64) * Math.PI * 2;
-      pts.push([Math.cos(t) * visualOrbitRadius, 0, Math.sin(t) * visualOrbitRadius]);
+    const samples = sampleOrbitPath(moon.elements, date, 64);
+    for (const p of samples) {
+      const dir = vecNormalize(p);
+      pts.push([dir.x * visualOrbitRadius, dir.z * visualOrbitRadius, dir.y * visualOrbitRadius]);
     }
     return pts;
-  }, [visualOrbitRadius]);
+  }, [moon.elements, date, visualOrbitRadius]);
 
   useFrame((_, delta) => {
     if (meshRef.current) meshRef.current.rotation.y += delta * 0.4;

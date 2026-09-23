@@ -14,6 +14,8 @@ import PlanetInfoCard from '@/components/ui/PlanetInfoCard';
 import DateCalendar from '@/components/ui/DateCalendar';
 import GeminiKeyModal from '@/components/ui/GeminiKeyModal';
 
+import NasaTelemetryBar from '@/components/ui/NasaTelemetryBar';
+
 const SceneCanvas = dynamic(() => import('@/components/scene/SceneCanvas'), { ssr: false });
 
 export default function Home() {
@@ -106,6 +108,10 @@ Keep it precise and grounded in the numbers given -- do not invent data not pres
               RELAY <span className="font-normal text-white/40">— comms path planner</span>
             </h1>
           </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
+          <NasaTelemetryBar />
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: -8 }}

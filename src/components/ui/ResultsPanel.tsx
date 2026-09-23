@@ -21,6 +21,8 @@ export default function ResultsPanel({ onAskGemini }: { onAskGemini: () => void 
   const geminiLoading = useSimStore((s) => s.geminiLoading);
   const geminiExplanation = useSimStore((s) => s.geminiExplanation);
   const date = useSimStore((s) => s.date);
+  const setDate = useSimStore((s) => s.setDate);
+  const setFocus = useSimStore((s) => s.setFocus);
   const [scheduleOpen, setScheduleOpen] = useState(true);
 
   if (!solution) return null;
@@ -28,6 +30,11 @@ export default function ResultsPanel({ onAskGemini }: { onAskGemini: () => void 
   const isConditional = solution.type === 'conditional';
   const delay = lightDelaySeconds(solution.totalPathLengthAU);
   const schedule = buildMonthlySchedule(solution, date);
+
+  const jumpToDate = (d: Date) => {
+    setDate(d);
+    setFocus({ type: 'solution' });
+  };
 
   /** The blackout window the displayed date currently falls inside, if any --
    * drives the "relay live right now" banner so the panel agrees with what
@@ -62,7 +69,11 @@ export default function ResultsPanel({ onAskGemini }: { onAskGemini: () => void 
       </div>
 
       {activeWindow && (
-        <div className="mb-2.5 rounded-lg border border-violet-400/40 bg-violet-500/15 p-2.5">
+        <div
+          onClick={() => jumpToDate(new Date((activeWindow.startDate.getTime() + activeWindow.endDate.getTime()) / 2))}
+          className="mb-2.5 cursor-pointer rounded-lg border border-violet-400/40 bg-violet-500/15 p-2.5 transition hover:bg-violet-500/25"
+          title="Click to jump to window midpoint"
+        >
           <p className="flex items-center gap-1.5 text-[11.5px] font-semibold text-violet-100">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet-300 shadow-[0_0_6px_2px_rgba(196,181,253,0.7)]" />
             Relay live right now
@@ -128,17 +139,23 @@ export default function ResultsPanel({ onAskGemini }: { onAskGemini: () => void 
           {solution.conditionalWindows.map((w, i) => {
             const wDelay = lightDelaySeconds(w.pathLengthAU);
             const isActive = w === activeWindow;
+            const midDate = new Date((w.startDate.getTime() + w.endDate.getTime()) / 2);
             return (
               <div
                 key={i}
-                className={`rounded-lg border p-2.5 ${
+                onClick={() => jumpToDate(midDate)}
+                className={`cursor-pointer rounded-lg border p-2.5 transition hover:brightness-110 ${
                   isActive ? 'border-violet-400/50 bg-violet-500/[0.12]' : 'border-amber-400/25 bg-amber-500/[0.07]'
                 }`}
+                title="Click to jump timeline to this blackout window"
               >
-                <p className={`text-[11.5px] font-semibold ${isActive ? 'text-violet-100' : 'text-amber-200'}`}>
-                  {isActive ? 'Active now: ' : 'Relay required: '}
-                  {formatDate(w.startDate)} – {formatDate(w.endDate)}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className={`text-[11.5px] font-semibold ${isActive ? 'text-violet-100' : 'text-amber-200'}`}>
+                    {isActive ? 'Active now: ' : 'Relay required: '}
+                    {formatDate(w.startDate)} – {formatDate(w.endDate)}
+                  </p>
+                  <span className="text-[9.5px] text-violet-300/60 underline">jump →</span>
+                </div>
                 <p className="mt-0.5 text-[10.5px] text-amber-100/60">
                   Blocked by {w.blockingBodies.join(', ') || 'occlusion'} — switches to{' '}
                   {w.relays.map((r) => r.label).join(' + ')} ({w.pathLengthAU.toFixed(3)} AU,{' '}
@@ -196,9 +213,11 @@ export default function ResultsPanel({ onAskGemini }: { onAskGemini: () => void 
                 {schedule.map((m, i) => (
                   <div
                     key={i}
-                    className={`flex items-center justify-between gap-2 rounded px-1.5 py-1 text-[10.5px] ${
+                    onClick={() => jumpToDate(m.monthStart)}
+                    className={`flex cursor-pointer items-center justify-between gap-2 rounded px-1.5 py-1 text-[10.5px] transition hover:bg-white/10 ${
                       m.status === 'relay' ? 'bg-violet-500/10' : ''
                     }`}
+                    title={`Jump timeline to ${m.label}`}
                   >
                     <span className="shrink-0 text-white/50">{m.label}</span>
                     {m.status === 'relay' ? (

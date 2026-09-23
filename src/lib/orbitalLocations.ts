@@ -109,6 +109,13 @@ export function parseAiOrbitResponse(rawText: string, originalQuery: string): Re
   const fenced = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fenced) jsonText = fenced[1].trim();
 
+  // Extract JSON object substring if surrounded by prose
+  const firstBrace = jsonText.indexOf('{');
+  const lastBrace = jsonText.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    jsonText = jsonText.substring(firstBrace, lastBrace + 1);
+  }
+
   let parsed: AiOrbitResponse;
   try {
     parsed = JSON.parse(jsonText);

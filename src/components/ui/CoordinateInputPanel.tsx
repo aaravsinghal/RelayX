@@ -126,27 +126,27 @@ function CoordRow({
         </div>
         <div className="relative">
           <select
-            className="cursor-pointer appearance-none rounded-md border border-white/10 bg-white/5 py-1 pl-2 pr-6 text-[10.5px] text-white/60 outline-none transition hover:border-white/20 hover:bg-white/10 hover:text-white/90"
+            className="cursor-pointer appearance-none rounded-md border border-white/10 bg-black/60 py-1 pl-2 pr-6 text-[10.5px] text-white/80 outline-none transition hover:border-white/20 hover:bg-black/80 hover:text-white"
             defaultValue=""
             onChange={(e) => {
               if (e.target.value) onPickPlanet(e.target.value);
               e.target.value = '';
             }}
           >
-            <option value="" disabled>
+            <option value="" disabled className="bg-[#0e0e1a] text-white/50">
               snap to planet or moon…
             </option>
-            <optgroup label="Planets">
+            <optgroup label="Planets" className="bg-[#0a0a14] text-white/50 font-semibold">
               {PLANETS.map((p) => (
-                <option key={p.name} value={p.name}>
+                <option key={p.name} value={p.name} className="bg-[#0e0e1a] text-white font-normal">
                   {p.name}
                 </option>
               ))}
             </optgroup>
             {PLANETS.filter((p) => moonsOf(p.name).length > 0).map((p) => (
-              <optgroup key={p.name} label={`${p.name}'s moons`}>
+              <optgroup key={p.name} label={`${p.name}'s moons`} className="bg-[#0a0a14] text-white/50 font-semibold">
                 {moonsOf(p.name).map((m) => (
-                  <option key={m.name} value={m.name}>
+                  <option key={m.name} value={m.name} className="bg-[#0e0e1a] text-white font-normal">
                     {m.name}
                   </option>
                 ))}
@@ -165,7 +165,7 @@ function CoordRow({
 
       <AttachmentBadge orbitalLocation={orbitalLocation} attachedPlanet={attachedPlanet} onDetach={onDetach} />
 
-      <div className="mb-2 flex items-center gap-1.5">
+      <div className="mb-1.5 flex items-center gap-1.5">
         <input
           value={orbitQuery}
           onChange={(e) => setOrbitQuery(e.target.value)}
@@ -193,6 +193,21 @@ function CoordRow({
             </svg>
           )}
         </button>
+      </div>
+
+      <div className="mb-2 flex flex-wrap gap-1">
+        {['Low Mars Orbit', 'Earth-Sun L2', 'Aldrin Cycler', 'Earth-Sun L4'].map((preset) => (
+          <button
+            key={preset}
+            onClick={() => {
+              setOrbitQuery(preset);
+              onLocateOrbit(preset);
+            }}
+            className="rounded bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-white/40 border border-white/[0.06] transition hover:border-violet-400/30 hover:bg-violet-400/10 hover:text-violet-200"
+          >
+            +{preset}
+          </button>
+        ))}
       </div>
       {locateError && <p className="mb-2 text-[10px] leading-snug text-rose-400">{locateError}</p>}
 
@@ -222,19 +237,19 @@ function CoordRow({
               <select
                 value={settlementBody}
                 onChange={(e) => setSettlementBody(e.target.value)}
-                className="w-full rounded-md border border-white/10 bg-black/40 px-2 py-1 text-[11px] text-white/80 outline-none"
+                className="w-full rounded-md border border-white/10 bg-black/60 px-2 py-1 text-[11px] text-white/80 outline-none"
               >
-                <optgroup label="Planets">
+                <optgroup label="Planets" className="bg-[#0a0a14] text-white/50 font-semibold">
                   {PLANETS.map((p) => (
-                    <option key={p.name} value={p.name}>
+                    <option key={p.name} value={p.name} className="bg-[#0e0e1a] text-white font-normal">
                       {p.name}
                     </option>
                   ))}
                 </optgroup>
                 {PLANETS.filter((p) => moonsOf(p.name).length > 0).map((p) => (
-                  <optgroup key={p.name} label={`${p.name}'s moons`}>
+                  <optgroup key={p.name} label={`${p.name}'s moons`} className="bg-[#0a0a14] text-white/50 font-semibold">
                     {moonsOf(p.name).map((m) => (
-                      <option key={m.name} value={m.name}>
+                      <option key={m.name} value={m.name} className="bg-[#0e0e1a] text-white font-normal">
                         {m.name}
                       </option>
                     ))}

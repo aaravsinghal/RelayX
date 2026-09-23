@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // Google periodically retires model IDs. Try these in order and fall through
 // to the next on a 404 "model not found / no longer available" response, so
 // a single deprecation doesn't hard-break the feature.
-const GEMINI_MODEL_CANDIDATES = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+const GEMINI_MODEL_CANDIDATES = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 
 async function callGemini(model: string, apiKey: string, prompt: string) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;

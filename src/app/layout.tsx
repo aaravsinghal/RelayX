@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Relay | Interstellar Comms Relay Planner",
+  title: "Relay | Comms Relay Planner",
   description:
     "Interactive 3D solar system for planning stable relay-satellite communication links between two points in space.",
 };
