@@ -61,10 +61,17 @@ export default function ResultsPanel({ onAskGemini }: { onAskGemini: () => void 
         ? 'bg-sky-500/20 text-sky-300'
         : 'bg-amber-500/20 text-amber-300';
 
+  const theme = useSimStore((s) => s.theme);
+  const isLight = theme === 'light';
+
   return (
-    <div className="w-[300px] rounded-2xl border border-white/10 bg-black/50 p-4 backdrop-blur-xl shadow-2xl shadow-black/50">
+    <div className={`w-[300px] rounded-2xl border p-4 backdrop-blur-xl shadow-2xl transition-colors ${
+      isLight
+        ? 'border-slate-300/80 bg-white/90 text-slate-900 shadow-slate-400/20'
+        : 'border-white/10 bg-black/50 text-white shadow-black/50'
+    }`}>
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-semibold tracking-wide text-white/90">Relay Solution</h2>
+        <h2 className={`text-sm font-semibold tracking-wide ${isLight ? 'text-slate-900' : 'text-white/90'}`}>Relay Solution</h2>
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${badgeClass}`}>{badgeText}</span>
       </div>
 

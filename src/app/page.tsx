@@ -89,8 +89,12 @@ Keep it precise and grounded in the numbers given -- do not invent data not pres
     }
   };
 
+  const theme = useSimStore((s) => s.theme);
+  const toggleTheme = useSimStore((s) => s.toggleTheme);
+  const isLight = theme === 'light';
+
   return (
-    <main className="relative h-dvh w-full overflow-hidden bg-black">
+    <main className={`relative h-dvh w-full overflow-hidden transition-colors ${isLight ? 'bg-slate-100 text-slate-900' : 'bg-black text-white'}`}>
       <div className="absolute inset-0">
         <SceneCanvas />
       </div>
@@ -102,10 +106,10 @@ Keep it precise and grounded in the numbers given -- do not invent data not pres
           animate={{ opacity: 1, y: 0 }}
           className="pointer-events-auto flex items-center gap-3"
         >
-          <div className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-black/50 px-4 py-2.5 backdrop-blur-xl">
+          <div className={`flex items-center gap-2.5 rounded-2xl border px-4 py-2.5 backdrop-blur-xl ${isLight ? 'border-slate-300 bg-white/80 shadow-md' : 'border-white/10 bg-black/50'}`}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-400 shadow-[0_0_8px_2px_rgba(56,189,248,0.6)]" />
-            <h1 className="text-sm font-semibold tracking-wide text-white/90">
-              RELAY <span className="font-normal text-white/40">— comms path planner</span>
+            <h1 className={`text-sm font-semibold tracking-wide ${isLight ? 'text-slate-900' : 'text-white/90'}`}>
+              RELAY <span className={`font-normal ${isLight ? 'text-slate-500' : 'text-white/40'}`}>— comms path planner</span>
             </h1>
           </div>
         </motion.div>
@@ -118,9 +122,24 @@ Keep it precise and grounded in the numbers given -- do not invent data not pres
           animate={{ opacity: 1, y: 0 }}
           className="pointer-events-auto flex items-center gap-2"
         >
+          <button
+            onClick={toggleTheme}
+            title="Toggle Light / Dark Mode"
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-2.5 text-xs font-medium backdrop-blur-xl transition ${
+              isLight
+                ? 'border-slate-300 bg-white/90 text-slate-800 hover:bg-slate-100 shadow-sm'
+                : 'border-white/10 bg-black/50 text-white/80 hover:border-white/20 hover:bg-white/10'
+            }`}
+          >
+            {isLight ? '☀️ Light Mode' : '🌙 Dark Mode'}
+          </button>
           <Link
             href="/calculations"
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs font-medium text-white/80 backdrop-blur-xl transition hover:border-white/20 hover:bg-white/10"
+            className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-xs font-medium backdrop-blur-xl transition ${
+              isLight
+                ? 'border-slate-300 bg-white/90 text-slate-800 hover:bg-slate-100 shadow-sm'
+                : 'border-white/10 bg-black/50 text-white/80 hover:border-white/20 hover:bg-white/10'
+            }`}
           >
             View the math
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
@@ -129,9 +148,13 @@ Keep it precise and grounded in the numbers given -- do not invent data not pres
           </Link>
           <button
             onClick={() => setKeyModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-black/50 px-3.5 py-2.5 text-xs font-medium text-white/80 backdrop-blur-xl transition hover:border-white/20 hover:bg-white/10"
+            className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-xs font-medium backdrop-blur-xl transition ${
+              isLight
+                ? 'border-slate-300 bg-white/90 text-slate-800 hover:bg-slate-100 shadow-sm'
+                : 'border-white/10 bg-black/50 text-white/80 hover:border-white/20 hover:bg-white/10'
+            }`}
           >
-            <span className={`h-1.5 w-1.5 rounded-full ${geminiApiKey ? 'bg-emerald-400' : 'bg-white/25'}`} />
+            <span className={`h-1.5 w-1.5 rounded-full ${geminiApiKey ? 'bg-emerald-400' : 'bg-slate-400'}`} />
             {geminiApiKey ? 'Gemini key set' : 'Set Gemini key'}
           </button>
         </motion.div>

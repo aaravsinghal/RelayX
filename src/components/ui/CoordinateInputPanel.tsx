@@ -435,10 +435,17 @@ export default function CoordinateInputPanel() {
   const syncA = attachKeyA ? `${attachKeyA}@${date.getTime()}` : `manual@${manualA}`;
   const syncB = attachKeyB ? `${attachKeyB}@${date.getTime()}` : `manual@${manualB}`;
 
+  const theme = useSimStore((s) => s.theme);
+  const isLight = theme === 'light';
+
   return (
-    <div className="w-[300px] rounded-2xl border border-white/10 bg-black/50 p-4 backdrop-blur-xl shadow-2xl shadow-black/50">
+    <div className={`w-[300px] rounded-2xl border p-4 backdrop-blur-xl shadow-2xl transition-colors ${
+      isLight
+        ? 'border-slate-300/80 bg-white/90 text-slate-900 shadow-slate-400/20'
+        : 'border-white/10 bg-black/50 text-white shadow-black/50'
+    }`}>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[13px] font-semibold tracking-wide text-white/90">
+        <h2 className={`text-[13px] font-semibold tracking-wide ${isLight ? 'text-slate-900' : 'text-white/90'}`}>
           Communication Endpoints
         </h2>
         <button

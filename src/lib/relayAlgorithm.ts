@@ -319,7 +319,9 @@ function isInteriorHit(t: number, segmentLengthAU: number): boolean {
   return distFromA > MIN_EDGE_DISTANCE_AU && distFromB > MIN_EDGE_DISTANCE_AU;
 }
 
-/** Is the segment A-B occluded by any planet, moon, or the Sun, at a single instant in time? */
+import { ASTEROIDS, asteroidPositionAtDate } from './asteroidData';
+
+/** Is the segment A-B occluded by any planet, moon, major asteroid, or the Sun, at a single instant in time? */
 export function isSegmentOccluded(a: Vec3, b: Vec3, date: Date): { occluded: boolean; by?: string } {
   const segLen = vecLength(vecSub(b, a));
   {
@@ -332,7 +334,6 @@ export function isSegmentOccluded(a: Vec3, b: Vec3, date: Date): { occluded: boo
     const pos = planetPositionAtDate(planet.elements, date);
     const { distance, t } = pointSegmentDistance(pos, a, b);
     const radiusAU = (planet.radiusKm + SIGNAL_MARGIN_KM) / AU_KM;
-    // Only counts as blocking if the closest approach lies strictly within the segment
     if (distance < radiusAU && isInteriorHit(t, segLen)) {
       return { occluded: true, by: planet.name };
     }
@@ -343,6 +344,14 @@ export function isSegmentOccluded(a: Vec3, b: Vec3, date: Date): { occluded: boo
     const radiusAU = moonOcclusionRadiusAU(moon);
     if (distance < radiusAU && isInteriorHit(t, segLen)) {
       return { occluded: true, by: moon.name };
+    }
+  }
+  for (const ast of ASTEROIDS) {
+    const pos = asteroidPositionAtDate(ast, date);
+    const { distance, t } = pointSegmentDistance(pos, a, b);
+    const radiusAU = (ast.radiusKm + MOON_SIGNAL_MARGIN_KM) / AU_KM;
+    if (distance < radiusAU && isInteriorHit(t, segLen)) {
+      return { occluded: true, by: ast.name };
     }
   }
   return { occluded: false };
@@ -397,6 +406,16 @@ function checkPathClearInRange(posA: PositionFn, posB: PositionFn, startMs: numb
       const margin = distance - radiusAU;
       if (margin < worstMarginAU) worstMarginAU = margin;
       if (margin < 0) blockingEvents.push({ date, planet: moon.name });
+    }
+
+    for (const ast of ASTEROIDS) {
+      const pos = asteroidPositionAtDate(ast, date);
+      const { distance, t } = pointSegmentDistance(pos, a, b);
+      if (!isInteriorHit(t, segLen)) continue;
+      const radiusAU = (ast.radiusKm + MOON_SIGNAL_MARGIN_KM) / AU_KM;
+      const margin = distance - radiusAU;
+      if (margin < worstMarginAU) worstMarginAU = margin;
+      if (margin < 0) blockingEvents.push({ date, planet: ast.name });
     }
   }
   if (worstMarginAU === Infinity) worstMarginAU = 0;

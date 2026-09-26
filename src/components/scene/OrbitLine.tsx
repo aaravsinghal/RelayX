@@ -23,5 +23,10 @@ export default function OrbitLine({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elements]);
 
-  return <Line points={points} color={color} lineWidth={0.6} transparent opacity={0.35} />;
+  return (
+    <>
+      <Line points={points} color={color} lineWidth={0.7} transparent opacity={0.4} />
+      <Line points={points} color={color} lineWidth={2.5} transparent opacity={0.12} depthWrite={false} />
+    </>
+  );
 }

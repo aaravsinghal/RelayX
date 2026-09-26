@@ -65,6 +65,10 @@ interface SimState {
 
   ephemerisMode: 'kepler' | 'nasa-horizons';
   setEphemerisMode: (mode: 'kepler' | 'nasa-horizons') => void;
+
+  theme: 'dark' | 'light';
+  setTheme: (t: 'dark' | 'light') => void;
+  toggleTheme: () => void;
 }
 
 const today = new Date();
@@ -98,6 +102,10 @@ export const useSimStore = create<SimState>((set) => ({
 
   ephemerisMode: 'kepler',
   setEphemerisMode: (mode) => set({ ephemerisMode: mode }),
+
+  theme: 'dark',
+  setTheme: (t) => set({ theme: t }),
+  toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
 }));
 
 export function coordPointToVec(p: CoordPoint): Vec3 {
